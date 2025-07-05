@@ -44,9 +44,21 @@ class ItemServiceImplUnitTest {
                 true, null);
 
         // Создаем объекты Item
-        Item newItem = new Item("Пылесос", "Мощный пылесос", true, owner, null);
-        Item savedItem = new Item("Пылесос", "Мощный пылесос", true, owner, null);
-        savedItem.setId(1L);
+        Item newItem = Item.builder()
+                .name("Пылесос")
+                .description("Мощный пылесос")
+                .available(true)
+                .owner(owner)
+                .request(null)
+                .build();
+        Item savedItem = Item.builder()
+                .id(1L)
+                .name("Пылесос")
+                .description("Мощный пылесос")
+                .available(true)
+                .owner(owner)
+                .request(null)
+                .build();
 
         ItemDtoResponse expectedResponse = new ItemDtoResponse(1L, "Пылесос", "Мощный пылесос",
                 true, null);
@@ -64,7 +76,7 @@ class ItemServiceImplUnitTest {
         assertEquals("Пылесос", actualResponse.getName());
         assertEquals("Мощный пылесос", actualResponse.getDescription());
         assertTrue(actualResponse.getAvailable());
-        assertNull(actualResponse.getRequest());
+        assertNull(actualResponse.getRequestDto());
 
         // Проверка вызовов
         verify(userStorage).getUserById(ownerId);
@@ -101,9 +113,23 @@ class ItemServiceImplUnitTest {
         owner.setId(ownerId);
         ItemDtoChange requestDto = new ItemDtoChange("Блендер", "Мощность 1000W",
                 true, null);
-        Item newItem = new Item("Блендер", "Мощность 1000W", true, owner, null);
-        Item savedItem = new Item("Блендер", "Мощность 1000W", true, owner, null);
-        savedItem.setId(4L);
+        Item newItem = Item.builder()
+                .name("Блендер")
+                .description("Мощность 1000W")
+                .available(true)
+                .owner(owner)
+                .request(null)
+                .build();
+
+        Item savedItem = Item.builder()
+                .id(4L)
+                .name("Блендер")
+                .description("Мощность 1000W")
+                .available(true)
+                .owner(owner)
+                .request(null)
+                .build();
+
         ItemDtoResponse expectedResponse = new ItemDtoResponse(4L, "Блендер", "Мощность 1000W",
                 true, null);
 
@@ -132,8 +158,14 @@ class ItemServiceImplUnitTest {
         Long userId = 1L;
         Long itemId = 10L;
         User owner = new User(userId, "Иван", "ivan@example.com");
-        Item item = new Item("Пылесос", "Мощный пылесос", true, owner, null);
-        item.setId(itemId);
+        Item item = Item.builder()
+                .id(itemId)
+                .name("Пылесос")
+                .description("Мощный пылесос")
+                .available(true)
+                .owner(owner)
+                .request(null)
+                .build();
         ItemDtoResponse expectedResponse = new ItemDtoResponse(itemId, "Пылесос", "Мощный пылесос",
                 true, null);
 
@@ -151,7 +183,7 @@ class ItemServiceImplUnitTest {
         assertEquals("Пылесос", actualResponse.getName());
         assertEquals("Мощный пылесос", actualResponse.getDescription());
         assertTrue(actualResponse.getAvailable());
-        assertNull(actualResponse.getRequest());
+        assertNull(actualResponse.getRequestDto());
 
         // Проверка вызовов
         verify(userStorage).userNotExists(userId);

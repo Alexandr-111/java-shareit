@@ -112,10 +112,23 @@ class ItemIntegrationTest {
         // Подготовка
         User owner = new User(null, "owner@mail.com", "Owner");
         User savedOwner = userStorage.create(owner);
-        Item item1 = itemStorage.create(new Item("Дрель", "Мощная дрель",
-                true, savedOwner, null));
-        Item item2 = itemStorage.create(new Item("Отвертка", "Крестовая",
-                true, savedOwner, null));
+        Item item1 = Item.builder()
+                .name("Дрель")
+                .description("Мощная дрель")
+                .available(true)
+                .owner(savedOwner)
+                .request(null)
+                .build();
+        itemStorage.create(item1);
+
+        Item item2 = Item.builder()
+                .name("Отвертка")
+                .description("Крестовая")
+                .available(true)
+                .owner(savedOwner)
+                .request(null)
+                .build();
+        itemStorage.create(item2);
 
         // Формирование запроса
         HttpHeaders headers = new HttpHeaders();

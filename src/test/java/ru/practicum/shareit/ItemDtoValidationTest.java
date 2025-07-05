@@ -81,7 +81,7 @@ class ItemDtoValidationTest {
 
         ConstraintViolation<ItemDtoChange> violation = violations.iterator().next();
         assertThat(violation.getMessage()).isEqualTo("Поле недоступно при обновлении");
-        assertThat(violation.getPropertyPath().toString()).isEqualTo("request");
+        assertThat(violation.getPropertyPath().toString()).isEqualTo("requestDto");
     }
 
    // Каскадная валидация при создании
@@ -90,7 +90,7 @@ class ItemDtoValidationTest {
 
         ItemDtoChange dto = TestDataFactory.validCreateDto()
                 .toBuilder()
-                .request(TestDataFactory.invalidItemRequest())
+                .requestDto(TestDataFactory.invalidItemRequestDtoChange())
                 .build();
 
         Set<ConstraintViolation<ItemDtoChange>> violations =

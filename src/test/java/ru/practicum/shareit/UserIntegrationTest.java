@@ -98,7 +98,10 @@ public class UserIntegrationTest {
 
     @Test
     void removeUser_ValidId_ReturnsOkWithSuccessMessage() throws Exception {
-        User user = new User("Иван Иванов", "ivan@example.com");
+        User user = User.builder()
+                .name("Иван Иванов")
+                .email("ivan@example.com")
+                .build();
         User createdUser = userStorage.create(user);
         Long id = createdUser.getId();
 

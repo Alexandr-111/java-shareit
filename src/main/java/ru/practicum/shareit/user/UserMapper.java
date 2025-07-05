@@ -11,18 +11,26 @@ public class UserMapper {
 
     public User toUser(UserDtoChange userDtoChange) {
         Objects.requireNonNull(userDtoChange, "ДТО (UserDtoChange) не должен быть null");
-        return new User(
-                userDtoChange.getName(),
-                userDtoChange.getEmail()
-        );
+        return User.builder()
+                .name(userDtoChange.getName())
+                .email(userDtoChange.getEmail())
+                .build();
+    }
+
+    public UserDtoChange toUserDtoChange(User user) {
+        Objects.requireNonNull(user, "Пользователь (User) не должен быть null");
+        return UserDtoChange.builder()
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
     }
 
     public UserDtoResponse toUserDtoResponse(User user) {
         Objects.requireNonNull(user, "Пользователь (User) не должен быть null");
-        return new UserDtoResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail()
-        );
+        return UserDtoResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
     }
 }

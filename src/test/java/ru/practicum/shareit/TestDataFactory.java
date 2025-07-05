@@ -1,32 +1,30 @@
 package ru.practicum.shareit;
 
 import ru.practicum.shareit.item.dto.ItemDtoChange;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.request.dto.ItemRequestDtoChange;
+import ru.practicum.shareit.user.dto.UserDtoChange;
 
 import java.time.LocalDateTime;
 
 public class TestDataFactory {
+    // Валидный ItemRequestDtoChange
+    public static ItemRequestDtoChange validItemRequestDto() {
+        UserDtoChange userDtoChange = new UserDtoChange();
+        userDtoChange.setName("Тестовый пользователь");
+        userDtoChange.setEmail("test@example.com");
 
-    public static ItemRequest validItemRequest() {
-        User user = new User();
-        user.setId(1L);
-        user.setName("Тестовый пользователь");
-        user.setEmail("test@example.com");
+        ItemRequestDtoChange requestDto = new ItemRequestDtoChange();
+        requestDto.setDescription("Нужна дрель");
+        requestDto.setRequestorDto(userDtoChange);
+        requestDto.setCreated(LocalDateTime.now());
 
-        ItemRequest request = new ItemRequest();
-        request.setId(1L);
-        request.setDescription("Нужна дрель");
-        request.setRequestor(user);
-        request.setCreated(LocalDateTime.now());
-
-        return request;
+        return requestDto;
     }
 
-    // Невалидный ItemRequest
-    public static ItemRequest invalidItemRequest() {
+    // Невалидный ItemRequestDtoChange
+    public static ItemRequestDtoChange invalidItemRequestDtoChange() {
         // Не устанавливаем обязательные поля
-        return new ItemRequest();
+        return new ItemRequestDtoChange();
     }
 
     // Валидный DTO для создания
@@ -35,7 +33,7 @@ public class TestDataFactory {
                 .name("Дрель ударная")
                 .description("Мощная дрель для бетона")
                 .available(true)
-                .request(validItemRequest()) // валидный вложенный объект
+                .requestDto(validItemRequestDto()) // валидный вложенный объект
                 .build();
     }
 
@@ -59,7 +57,7 @@ public class TestDataFactory {
     public static ItemDtoChange invalidUpdateDto() {
         return ItemDtoChange.builder()
                 .name("Новое название")
-                .request(validItemRequest()) // запрещенное поле
+                .requestDto(validItemRequestDto()) // запрещенное поле
                 .build();
     }
 }

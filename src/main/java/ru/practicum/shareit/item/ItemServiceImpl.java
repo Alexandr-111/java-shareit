@@ -13,7 +13,6 @@ import ru.practicum.shareit.user.UserStorage;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -22,7 +21,6 @@ public class ItemServiceImpl implements ItemService {
     private final ItemStorage itemStorage;
     private final UserStorage userStorage;
     private final ItemMapper itemMapper;
-    ;
 
     @Override
     public ItemDtoResponse create(Long ownerId, ItemDtoChange itemDtoChange) {
@@ -103,7 +101,6 @@ public class ItemServiceImpl implements ItemService {
         // Отбираем только вещи доступные для аренды
         // и содержащие текст в названии или описании (без учета регистра)
         return items.stream()
-                .filter(Objects::nonNull)
                 .filter(item -> Boolean.TRUE.equals(item.getAvailable()))
                 .filter(item -> (item.getName() != null && item.getName().toLowerCase().contains(search))
                         || (item.getDescription() != null && item.getDescription().toLowerCase().contains(search)))

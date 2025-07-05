@@ -50,7 +50,7 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public void resetStorage(){
+    public void resetStorage() {
         storageItems.clear();
         id = 0;
     }

@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 public class Booking {
-    Long id; // уникальный идентификатор бронирования;
-    LocalDateTime start;// дата и время начала бронирования;
-    LocalDateTime end; //дата и время конца бронирования;
-    Item item; // вещь, которую пользователь бронирует;
-    User booker; // пользователь, который осуществляет бронирование;
-    Status status;
+    private Long id; // уникальный идентификатор бронирования;
+    private LocalDateTime start;// дата и время начала бронирования;
+    private LocalDateTime end; //дата и время конца бронирования;
+    private Item item; // вещь, которую пользователь бронирует;
+    private User booker; // пользователь, который осуществляет бронирование;
+    private Status status;
 }

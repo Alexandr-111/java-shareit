@@ -2,20 +2,24 @@ package ru.practicum.shareit.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 import ru.practicum.shareit.validate.OnCreate;
 import lombok.Data;
 
 @Data
+@Jacksonized
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class UserDtoChange {
+
     @NotEmpty(groups = {OnCreate.class}, message = "Имя обязательно при создании")
-    String name;
+    private String name;
 
     @NotEmpty(groups = OnCreate.class, message = "Email обязателен при создании")
     @Email(message = "Email является некорректным")
-    String email;
-
-    public UserDtoChange(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
+    private String email;
 }

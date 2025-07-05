@@ -39,9 +39,17 @@ class UserServiceImplUnitTest {
     void create_shouldCreateUserSuccessfully() {
         // Подготовка входных данных
         UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-        User userEntity = new User("Кузьма Кузьмин", "kuzma@example.com");
-        User savedUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        savedUser.setId(1L);
+        User userEntity = User.builder()
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
+
+        User savedUser = User.builder()
+                .id(1L)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
+
         UserDtoResponse expectedResponse = new UserDtoResponse(1L, "Кузьма Кузьмин",
                 "kuzma@example.com");
 
@@ -88,9 +96,17 @@ class UserServiceImplUnitTest {
     void create_shouldUseMapperCorrectly() {
         // Подготовка данных
         UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-        User userEntity = new User("Кузьма Кузьмин", "kuzma@example.com");
-        User savedUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        savedUser.setId(1L);
+
+        User userEntity = User.builder()
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
+
+        User savedUser = User.builder()
+                .id(1L)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
         UserDtoResponse expectedResponse = new UserDtoResponse(1L, "Кузьма Кузьмин",
                 "kuzma@example.com");
 
@@ -113,10 +129,16 @@ class UserServiceImplUnitTest {
     void create_shouldPassCorrectEntityToStorage() {
         // Подготовка данных
         UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-        User userEntity = new User("Кузьма Кузьмин", "kuzma@example.com");
-        User savedUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        savedUser.setId(1L);
+        User userEntity = User.builder()
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
 
+        User savedUser = User.builder()
+                .id(1L)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
         // Мокирование
         when(userStorage.findEmail("kuzma@example.com")).thenReturn(false);
         when(userMapper.toUser(requestDto)).thenReturn(userEntity);
@@ -149,10 +171,17 @@ class UserServiceImplUnitTest {
         // Подготовка входных данных
         Long userId = 1L;
         UserDtoChange updateDto = new UserDtoChange("Савва Саввин", "savva@example.com");
-        User existingUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        existingUser.setId(userId);
-        User updatedUser = new User("Савва Саввин", "savva@example.com");
-        updatedUser.setId(userId);
+        User existingUser = User.builder()
+                .id(userId)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
+
+        User updatedUser = User.builder()
+                .id(userId)
+                .name("Савва Саввин")
+                .email("savva@example.com")
+                .build();
         UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Савва Саввин",
                 "savva@example.com");
 
@@ -183,8 +212,11 @@ class UserServiceImplUnitTest {
         // Подготовка входных данных
         Long userId = 1L;
         UserDtoChange updateDto = new UserDtoChange("Савва Саввин", "existing@example.com");
-        User existingUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        existingUser.setId(userId);
+        User existingUser = User.builder()
+                .id(userId)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
 
         // Мокирование поведения
         when(userStorage.getUserById(userId)).thenReturn(Optional.of(existingUser));
@@ -198,8 +230,11 @@ class UserServiceImplUnitTest {
     void getById_shouldReturnUserSuccessfully() {
         // Подготовка входных данных
         Long userId = 1L;
-        User existingUser = new User("Кузьма Кузьмин", "kuzma@example.com");
-        existingUser.setId(userId);
+        User existingUser = User.builder()
+                .id(userId)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
         UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Кузьма Кузьмин",
                 "kuzma@example.com");
 
@@ -225,10 +260,16 @@ class UserServiceImplUnitTest {
     @Test
     void getAll_shouldReturnListOfUsers() {
         // Подготовка входных данных
-        User user1 = new User("Кузьма Кузьмин", "kuzma@example.com");
-        user1.setId(1L);
-        User user2 = new User("Савва Саввин", "savva@example.com");
-        user2.setId(2L);
+        User user1 = User.builder()
+                .id(1L)
+                .name("Кузьма Кузьмин")
+                .email("kuzma@example.com")
+                .build();
+        User user2 = User.builder()
+                .id(2L)
+                .name("Савва Саввин")
+                .email("savva@example.com")
+                .build();
 
         UserDtoResponse dto1 = new UserDtoResponse(1L, "Кузьма Кузьмин", "kuzma@example.com");
         UserDtoResponse dto2 = new UserDtoResponse(2L, "Савва Саввин", "savva@example.com");
