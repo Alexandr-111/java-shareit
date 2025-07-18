@@ -25,5 +25,5 @@ public class ItemRequestDtoChange {
     @NotNull(groups = {OnCreate.class}, message = "Пользователь, создавший запрос - обязательно")
     private UserDtoChange requestorDto;
 
-    private LocalDateTime created; //дата и время создания запроса
+    private LocalDateTime created;
 }
