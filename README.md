@@ -1,3 +1,2 @@
-
-## Database Schema
-![Java-shareit database schema ](/image/shareit_database.png)
+# java-shareit
+Template repository for Shareit project.

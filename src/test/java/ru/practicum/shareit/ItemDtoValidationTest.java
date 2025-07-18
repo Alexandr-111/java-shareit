@@ -84,7 +84,7 @@ class ItemDtoValidationTest {
         assertThat(violation.getPropertyPath().toString()).isEqualTo("requestDto");
     }
 
-    // Каскадная валидация при создании
+   // Каскадная валидация при создании
     @Test
     void whenNestedRequestIsInvalid_thenCascadeValidationFails() {
 
