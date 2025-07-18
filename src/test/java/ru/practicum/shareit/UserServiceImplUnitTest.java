@@ -2,32 +2,39 @@ package ru.practicum.shareit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.DataNotFoundException;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
-import ru.practicum.shareit.user.UserStorage;
 import ru.practicum.shareit.user.dto.UserDtoChange;
 import ru.practicum.shareit.user.dto.UserDtoResponse;
-import ru.practicum.shareit.user.User;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplUnitTest {
 
     @Mock
-    private UserStorage userStorage;
+    private UserRepository userRepository;
 
     @Mock
     private UserMapper userMapper;
@@ -36,273 +43,273 @@ class UserServiceImplUnitTest {
     private UserServiceImpl userService;
 
     @Test
-    void create_shouldCreateUserSuccessfully() {
-        // Подготовка входных данных
-        UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-        User userEntity = User.builder()
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
+    void create_shouldCreateUserWhenEmailIsUnique() {
+        // Подготовка данных
+        UserDtoChange requestDto = new UserDtoChange("Ivan Ivanov", "ivan@example.com");
+        User newUser = new User();
+        newUser.setName("Ivan Ivanov");
+        newUser.setEmail("ivan@example.com");
 
-        User savedUser = User.builder()
-                .id(1L)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
+        User savedUser = new User();
+        savedUser.setId(1L);
+        savedUser.setName("Ivan Ivanov");
+        savedUser.setEmail("ivan@example.com");
 
-        UserDtoResponse expectedResponse = new UserDtoResponse(1L, "Кузьма Кузьмин",
-                "kuzma@example.com");
+        UserDtoResponse expectedResponse = new UserDtoResponse(1L, "Ivan Ivanov", "ivan@example.com");
 
-        // Мокирование поведения
-        when(userStorage.findEmail("kuzma@example.com")).thenReturn(false);
-        when(userMapper.toUser(requestDto)).thenReturn(userEntity);
-        when(userStorage.create(userEntity)).thenReturn(savedUser);
+        // Мокирование
+        when(userRepository.existsByEmail("ivan@example.com")).thenReturn(false);
+        when(userMapper.toUser(requestDto)).thenReturn(newUser);
+        when(userRepository.save(newUser)).thenReturn(savedUser);
         when(userMapper.toUserDtoResponse(savedUser)).thenReturn(expectedResponse);
 
-        // Вызов метода
         UserDtoResponse actualResponse = userService.create(requestDto);
 
         // Проверки
         assertNotNull(actualResponse);
         assertEquals(1L, actualResponse.getId());
-        assertEquals("Кузьма Кузьмин", actualResponse.getName());
-        assertEquals("kuzma@example.com", actualResponse.getEmail());
+        assertEquals("Ivan Ivanov", actualResponse.getName());
+        assertEquals("ivan@example.com", actualResponse.getEmail());
 
-        // Проверка вызовов
-        verify(userStorage).findEmail("kuzma@example.com");
+        verify(userRepository).existsByEmail("ivan@example.com");
         verify(userMapper).toUser(requestDto);
-        verify(userStorage).create(userEntity);
+        verify(userRepository).save(newUser);
         verify(userMapper).toUserDtoResponse(savedUser);
     }
 
     @Test
     void create_shouldThrowConflictExceptionWhenEmailExists() {
-        // Подготовка данных
-        UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "existing@example.com");
-        // Мокирование поведения
-        when(userStorage.findEmail("existing@example.com")).thenReturn(true);
-        // Проверка исключения
+        UserDtoChange requestDto = new UserDtoChange("Ivan Ivanov", "ivan@example.com");
+        // Мокирование
+        when(userRepository.existsByEmail("ivan@example.com")).thenReturn(true);
+        // Проверка
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> userService.create(requestDto));
         assertEquals("Такой email уже зарегистрирован, необходимо использовать другой.",
                 exception.getMessage());
-        // Проверка, что методы не вызывались
-        verify(userStorage, never()).create(any());
-        verify(userMapper, never()).toUser(any());
-        verify(userMapper, never()).toUserDtoResponse(any());
+
+        verify(userRepository).existsByEmail("ivan@example.com");
+        verifyNoInteractions(userMapper);
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void create_shouldUseMapperCorrectly() {
+    void update_shouldUpdateNameAndEmailWhenDataValid() {
         // Подготовка данных
-        UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-
-        User userEntity = User.builder()
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-
-        User savedUser = User.builder()
-                .id(1L)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-        UserDtoResponse expectedResponse = new UserDtoResponse(1L, "Кузьма Кузьмин",
-                "kuzma@example.com");
-
-        // Мокирование
-        when(userStorage.findEmail("kuzma@example.com")).thenReturn(false);
-        when(userMapper.toUser(requestDto)).thenReturn(userEntity);
-        when(userStorage.create(userEntity)).thenReturn(savedUser);
-        when(userMapper.toUserDtoResponse(savedUser)).thenReturn(expectedResponse);
-
-        userService.create(requestDto);
-
-        verify(userMapper).toUser(requestDto);
-        verify(userMapper).toUserDtoResponse(savedUser);
-
-        assertEquals("Кузьма Кузьмин", userEntity.getName());
-        assertEquals("kuzma@example.com", userEntity.getEmail());
-    }
-
-    @Test
-    void create_shouldPassCorrectEntityToStorage() {
-        // Подготовка данных
-        UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", "kuzma@example.com");
-        User userEntity = User.builder()
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-
-        User savedUser = User.builder()
-                .id(1L)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-        // Мокирование
-        when(userStorage.findEmail("kuzma@example.com")).thenReturn(false);
-        when(userMapper.toUser(requestDto)).thenReturn(userEntity);
-        when(userStorage.create(userEntity)).thenReturn(savedUser);
-        when(userMapper.toUserDtoResponse(any())).thenReturn(new UserDtoResponse(1L, "Кузьма Кузьмин",
-                "kuzma@example.com"));
-
-        userService.create(requestDto);
-
-        // Проверка передачи в хранилище
-        verify(userStorage).create(userEntity);
-
-        // Проверка, что ID установлен при сохранении
-        assertNotNull(savedUser.getId());
-        assertEquals(1L, savedUser.getId());
-    }
-
-    @Test
-    void create_shouldHandleNullEmailInRequest() {
-        UserDtoChange requestDto = new UserDtoChange("Кузьма Кузьмин", null);
-
-        when(userStorage.findEmail(null)).thenThrow(new IllegalArgumentException("Email cannot be null"));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.create(requestDto));
-    }
-
-    @Test
-    void update_shouldUpdateUserSuccessfully() {
-        // Подготовка входных данных
         Long userId = 1L;
-        UserDtoChange updateDto = new UserDtoChange("Савва Саввин", "savva@example.com");
-        User existingUser = User.builder()
-                .id(userId)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
+        UserDtoChange updateDto = new UserDtoChange("Ivan Updated", "updated@example.com");
 
-        User updatedUser = User.builder()
-                .id(userId)
-                .name("Савва Саввин")
-                .email("savva@example.com")
-                .build();
-        UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Савва Саввин",
-                "savva@example.com");
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setName("Ivan Original");
+        existingUser.setEmail("original@example.com");
 
-        // Мокирование поведения
-        when(userStorage.getUserById(userId)).thenReturn(Optional.of(existingUser));
-        when(userStorage.findEmail("savva@example.com")).thenReturn(false);
-        when(userStorage.update(updatedUser)).thenReturn(updatedUser);
+        User updatedUser = new User();
+        updatedUser.setId(userId);
+        updatedUser.setName("Ivan Updated");
+        updatedUser.setEmail("updated@example.com");
+
+        UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Ivan Updated", "updated@example.com");
+
+        // Мокирование
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmail("updated@example.com")).thenReturn(false);
+        when(userRepository.save(existingUser)).thenReturn(updatedUser);
         when(userMapper.toUserDtoResponse(updatedUser)).thenReturn(expectedResponse);
 
-        // Вызов и проверка
-        UserDtoResponse result = userService.update(userId, updateDto);
-        assertEquals(expectedResponse, result);
+        UserDtoResponse actualResponse = userService.update(userId, updateDto);
 
-        // Создаем объект для проверки порядка вызовов
-        InOrder inOrder = inOrder(userStorage, userMapper);
+        assertNotNull(actualResponse);
+        assertEquals(userId, actualResponse.getId());
+        assertEquals("Ivan Updated", actualResponse.getName());
+        assertEquals("updated@example.com", actualResponse.getEmail());
 
-        inOrder.verify(userStorage, times(1)).getUserById(userId);
-        inOrder.verify(userStorage).findEmail("savva@example.com");
-        inOrder.verify(userStorage).update(argThat(user ->
-                user.getName().equals("Савва Саввин") &&
-                        user.getEmail().equals("savva@example.com")
-        ));
-        inOrder.verify(userMapper).toUserDtoResponse(any(User.class));
+        verify(userRepository).findById(userId);
+        verify(userRepository).existsByEmail("updated@example.com");
+        verify(userRepository).save(existingUser);
+        verify(userMapper).toUserDtoResponse(updatedUser);
     }
 
     @Test
-    void update_shouldThrowConflictWhenEmailExists() {
-        // Подготовка входных данных
+    void update_shouldUpdateNameOnlyWhenEmailNotChanged() {
         Long userId = 1L;
-        UserDtoChange updateDto = new UserDtoChange("Савва Саввин", "existing@example.com");
-        User existingUser = User.builder()
-                .id(userId)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
+        UserDtoChange updateDto = new UserDtoChange("Ivan Updated", null);
 
-        // Мокирование поведения
-        when(userStorage.getUserById(userId)).thenReturn(Optional.of(existingUser));
-        when(userStorage.findEmail("existing@example.com")).thenReturn(true);
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setName("Ivan Original");
+        existingUser.setEmail("ivan@example.com");
 
-        // Вызов и проверка
-        assertThrows(ConflictException.class, () -> userService.update(userId, updateDto));
+        User updatedUser = new User();
+        updatedUser.setId(userId);
+        updatedUser.setName("Ivan Updated");
+        updatedUser.setEmail("ivan@example.com");
+
+        UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Ivan Updated", "ivan@example.com");
+
+        // Мокирование
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(existingUser)).thenReturn(updatedUser);
+        when(userMapper.toUserDtoResponse(updatedUser)).thenReturn(expectedResponse);
+
+        UserDtoResponse actualResponse = userService.update(userId, updateDto);
+
+        assertNotNull(actualResponse);
+        assertEquals(userId, actualResponse.getId());
+        assertEquals("Ivan Updated", actualResponse.getName());
+        assertEquals("ivan@example.com", actualResponse.getEmail());
+
+        verify(userRepository).findById(userId);
+        verify(userRepository, never()).existsByEmail(any());
+        verify(userRepository).save(existingUser);
+        verify(userMapper).toUserDtoResponse(updatedUser);
     }
 
     @Test
-    void getById_shouldReturnUserSuccessfully() {
-        // Подготовка входных данных
+    void update_shouldThrowDataNotFoundExceptionWhenUserNotFound() {
+        Long userId = 99L;
+        UserDtoChange updateDto = new UserDtoChange("Ivan Updated", "updated@example.com");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
+                () -> userService.update(userId, updateDto));
+        assertEquals("Пользователь с id 99 не найден", exception.getMessage());
+
+        verify(userRepository).findById(userId);
+        verifyNoMoreInteractions(userRepository);
+        verifyNoInteractions(userMapper);
+    }
+
+    @Test
+    void update_shouldThrowConflictExceptionWhenEmailExists() {
         Long userId = 1L;
-        User existingUser = User.builder()
-                .id(userId)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-        UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Кузьма Кузьмин",
-                "kuzma@example.com");
+        UserDtoChange updateDto = new UserDtoChange("Ivan Updated", "existing@example.com");
 
-        // Мокирование поведения
-        when(userStorage.getUserById(userId)).thenReturn(Optional.of(existingUser));
-        when(userMapper.toUserDtoResponse(existingUser)).thenReturn(expectedResponse);
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setName("Ivan Original");
+        existingUser.setEmail("original@example.com");
 
-        // Вызов и проверка
-        UserDtoResponse result = userService.getUserById(userId);
-        assertEquals(expectedResponse, result);
+        // Мокирование
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
+
+        // Проверка исключения
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> userService.update(userId, updateDto));
+        assertEquals("Такой email уже зарегистрирован, необходимо использовать другой.",
+                exception.getMessage());
+
+        verify(userRepository).findById(userId);
+        verify(userRepository).existsByEmail("existing@example.com");
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(userMapper);
     }
 
     @Test
-    void getById_shouldThrowNotFoundWhenUserNotExists() {
-        // Подготовка входных данных
-        Long userId = 9999L;
-        // Мокирование поведения
-        when(userStorage.getUserById(userId)).thenReturn(Optional.empty());
-        // Вызов и проверка
-        assertThrows(DataNotFoundException.class, () -> userService.getUserById(userId));
+    void getAll_shouldReturnEmptyListWhenNoUsers() {
+
+        when(userRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<UserDtoResponse> result = userService.getAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(userRepository).findAll();
+        verifyNoInteractions(userMapper);
     }
 
     @Test
     void getAll_shouldReturnListOfUsers() {
-        // Подготовка входных данных
-        User user1 = User.builder()
-                .id(1L)
-                .name("Кузьма Кузьмин")
-                .email("kuzma@example.com")
-                .build();
-        User user2 = User.builder()
-                .id(2L)
-                .name("Савва Саввин")
-                .email("savva@example.com")
-                .build();
+        User user1 = new User();
+        user1.setId(1L);
+        user1.setName("Ivan Ivanov");
+        user1.setEmail("ivan@example.com");
 
-        UserDtoResponse dto1 = new UserDtoResponse(1L, "Кузьма Кузьмин", "kuzma@example.com");
-        UserDtoResponse dto2 = new UserDtoResponse(2L, "Савва Саввин", "savva@example.com");
+        User user2 = new User();
+        user2.setId(2L);
+        user2.setName("Petr Petrov");
+        user2.setEmail("petr@example.com");
 
-        // Мокирование поведения
-        when(userStorage.getAll()).thenReturn(List.of(user1, user2));
+        UserDtoResponse dto1 = new UserDtoResponse(1L, "Ivan Ivanov", "ivan@example.com");
+        UserDtoResponse dto2 = new UserDtoResponse(2L, "Petr Petrov", "petr@example.com");
+
+        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
         when(userMapper.toUserDtoResponse(user1)).thenReturn(dto1);
         when(userMapper.toUserDtoResponse(user2)).thenReturn(dto2);
 
-        // Вызов и проверка
         List<UserDtoResponse> result = userService.getAll();
+
+        assertNotNull(result);
         assertEquals(2, result.size());
-        assertTrue(result.containsAll(List.of(dto1, dto2)));
+        assertEquals(dto1, result.get(0));
+        assertEquals(dto2, result.get(1));
+
+        verify(userRepository).findAll();
+        verify(userMapper, times(2)).toUserDtoResponse(any());
     }
 
     @Test
-    void delete_shouldDeleteUserSuccessfully() {
-        // Подготовка входных данных
+    void getUserById_shouldReturnUserWhenExists() {
         Long userId = 1L;
-        // Мокирование поведения
-        when(userStorage.userNotExists(userId)).thenReturn(false);
-        // Вызов и проверка
-        assertDoesNotThrow(() -> userService.deleteUser(userId));
-        verify(userStorage).deleteUser(userId);
+        User user = new User();
+        user.setId(userId);
+        user.setName("Ivan Ivanov");
+        user.setEmail("ivan@example.com");
+        UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Ivan Ivanov", "ivan@example.com");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toUserDtoResponse(user)).thenReturn(expectedResponse);
+
+        UserDtoResponse actualResponse = userService.getUserById(userId);
+
+        assertNotNull(actualResponse);
+        assertEquals(userId, actualResponse.getId());
+        assertEquals("Ivan Ivanov", actualResponse.getName());
+        assertEquals("ivan@example.com", actualResponse.getEmail());
+
+        verify(userRepository).findById(userId);
+        verify(userMapper).toUserDtoResponse(user);
     }
 
     @Test
-    void delete_shouldThrowNotFoundWhenUserNotExists() {
-        // Подготовка входных данных
-        Long userId = 9999L;
-        // Мокирование поведения
-        when(userStorage.userNotExists(userId)).thenReturn(true);
-        // Вызов и проверка
-        assertThrows(DataNotFoundException.class, () -> userService.deleteUser(userId));
+    void getUserById_shouldThrowExceptionWhenUserNotFound() {
+        Long userId = 99L;
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
+                () -> userService.getUserById(userId));
+        assertEquals("Пользователь с id 99 не найден", exception.getMessage());
+
+        verify(userRepository).findById(userId);
+        verifyNoInteractions(userMapper);
+    }
+
+    @Test
+    void deleteUser_shouldDeleteWhenUserExists() {
+        Long userId = 1L;
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        userService.deleteUser(userId);
+
+        verify(userRepository).existsById(userId);
+        verify(userRepository).deleteById(userId);
+    }
+
+    @Test
+    void deleteUser_shouldThrowExceptionWhenUserNotFound() {
+        Long userId = 99L;
+        when(userRepository.existsById(userId)).thenReturn(false);
+
+        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
+                () -> userService.deleteUser(userId));
+        assertEquals("Пользователь с id 99 не найден", exception.getMessage());
+
+        verify(userRepository).existsById(userId);
+        verify(userRepository, never()).deleteById(any());
     }
 }

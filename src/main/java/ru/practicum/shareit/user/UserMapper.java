@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.user.dto.UserDtoChange;
+import ru.practicum.shareit.user.dto.UserDtoInternal;
 import ru.practicum.shareit.user.dto.UserDtoResponse;
 
 import java.util.Objects;
@@ -31,6 +32,13 @@ public class UserMapper {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .build();
+    }
+
+    public UserDtoInternal toUserDtoInternal(User user) {
+        Objects.requireNonNull(user, "Пользователь (User) не должен быть null");
+        return UserDtoInternal.builder()
+                .id(user.getId())
                 .build();
     }
 }
