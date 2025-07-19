@@ -9,8 +9,6 @@ import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.booking.dto.BookingInfoDto;
-import ru.practicum.shareit.comment.CommentMapper;
-import ru.practicum.shareit.comment.CommentRepository;
 import ru.practicum.shareit.exception.BadInputException;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.item.Item;
@@ -125,19 +123,12 @@ class ItemServiceImplUnitTest {
         ItemDtoChange updateDto = new ItemDtoChange();
         updateDto.setName("Новое название");
 
-        Item updatedItem = new Item();
-        updatedItem.setId(itemId);
-        updatedItem.setName("Новое название");
-        updatedItem.setDescription("Старое описание");
-        updatedItem.setAvailable(true);
-
         ItemDtoResponse expectedResponse = new ItemDtoResponse(itemId, "Новое название",
                 "Старое описание", true, null);
 
         when(userRepository.existsById(userId)).thenReturn(true);
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(existingItem));
-        when(itemRepository.save(any(Item.class))).thenReturn(updatedItem);
-        when(itemMapper.toItemDtoResponse(updatedItem)).thenReturn(expectedResponse);
+        when(itemMapper.toItemDtoResponse(existingItem)).thenReturn(expectedResponse);
 
         ItemDtoResponse actualResponse = itemService.update(userId, itemId, updateDto);
 
@@ -146,7 +137,6 @@ class ItemServiceImplUnitTest {
         assertEquals("Старое описание", actualResponse.getDescription());
 
         verify(itemRepository).findById(itemId);
-        verify(itemRepository).save(existingItem);
     }
 
     @Test

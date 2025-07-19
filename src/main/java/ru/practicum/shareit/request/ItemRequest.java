@@ -29,7 +29,7 @@ import java.util.Objects;
 @Table(name = "requests", schema = "public")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"requestor", "items"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

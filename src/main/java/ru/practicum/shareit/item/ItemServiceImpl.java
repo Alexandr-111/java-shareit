@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
@@ -24,7 +25,6 @@ import ru.practicum.shareit.user.UserRepository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,15 +36,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final BookingRepository bookingRepository;
     private final ItemMapper itemMapper;
-    private final CommentMapper commentMapper;
 
     @Override
+    @Transactional
     public ItemDtoResponse create(Long ownerId, ItemDtoChange itemDtoChange) {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new DataNotFoundException("Пользователь с id " + ownerId + " не найден"));
@@ -54,6 +55,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDtoResponse update(Long userId, Long itemId, ItemDtoChange itemDtoChange) {
         if (!userRepository.existsById(userId)) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не найден");
@@ -79,8 +81,7 @@ public class ItemServiceImpl implements ItemService {
         if (itemDtoChange.getAvailable() != null) {
             existingItem.setAvailable(itemDtoChange.getAvailable());
         }
-        Item updateItem = itemRepository.save(existingItem);
-        return itemMapper.toItemDtoResponse(updateItem);
+        return itemMapper.toItemDtoResponse(existingItem);
     }
 
     @Override
@@ -156,6 +157,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDtoResponse createComment(Long itemId, Long userId, CommentDtoChange commentDtoChange) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("Пользователь с id " + userId + " не найден"));
@@ -178,8 +180,8 @@ public class ItemServiceImpl implements ItemService {
         if (!isCompletedBooking) {
             throw new CommentNotAllowedException("Пользователь не брал вещь в аренду или аренда еще не завершена");
         }
-        Comment comment = commentMapper.toComment(item, user, commentDtoChange);
+        Comment comment = CommentMapper.toComment(item, user, commentDtoChange);
         Comment createdComment = commentRepository.save(comment);
-        return commentMapper.toCommentDtoResponse(user, createdComment);
+        return CommentMapper.toCommentDtoResponse(user, createdComment);
     }
 }

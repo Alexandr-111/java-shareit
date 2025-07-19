@@ -3,6 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.user.dto.UserDtoChange;
@@ -13,11 +14,13 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public UserDtoResponse create(UserDtoChange userDtoChange) {
         log.debug("Вызван метод UserService.create(). Получен объект UserDtoChange {}", userDtoChange);
 
@@ -30,6 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDtoResponse update(Long userId, UserDtoChange userDtoChange) {
         log.debug("Вызван метод UserService.update(). Получены объекты Long {} и UserDtoChange {}",
                 userId, userDtoChange);
@@ -47,8 +51,7 @@ public class UserServiceImpl implements UserService {
         if (userDtoChange.getName() != null) {
             existingUser.setName(userDtoChange.getName());
         }
-        User updatedUser = userRepository.save(existingUser);
-        return userMapper.toUserDtoResponse(updatedUser);
+        return userMapper.toUserDtoResponse(existingUser);
     }
 
     @Override
@@ -69,6 +72,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(long id) {
         log.debug("Вызван метод UserService.deleteUser() c ID = {}", id);
         if (!userRepository.existsById(id)) {

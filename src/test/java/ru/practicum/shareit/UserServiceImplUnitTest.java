@@ -104,18 +104,12 @@ class UserServiceImplUnitTest {
         existingUser.setName("Ivan Original");
         existingUser.setEmail("original@example.com");
 
-        User updatedUser = new User();
-        updatedUser.setId(userId);
-        updatedUser.setName("Ivan Updated");
-        updatedUser.setEmail("updated@example.com");
-
         UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Ivan Updated", "updated@example.com");
 
         // Мокирование
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.existsByEmail("updated@example.com")).thenReturn(false);
-        when(userRepository.save(existingUser)).thenReturn(updatedUser);
-        when(userMapper.toUserDtoResponse(updatedUser)).thenReturn(expectedResponse);
+        when(userMapper.toUserDtoResponse(existingUser)).thenReturn(expectedResponse);
 
         UserDtoResponse actualResponse = userService.update(userId, updateDto);
 
@@ -126,8 +120,7 @@ class UserServiceImplUnitTest {
 
         verify(userRepository).findById(userId);
         verify(userRepository).existsByEmail("updated@example.com");
-        verify(userRepository).save(existingUser);
-        verify(userMapper).toUserDtoResponse(updatedUser);
+        verify(userMapper).toUserDtoResponse(existingUser);
     }
 
     @Test
@@ -140,17 +133,11 @@ class UserServiceImplUnitTest {
         existingUser.setName("Ivan Original");
         existingUser.setEmail("ivan@example.com");
 
-        User updatedUser = new User();
-        updatedUser.setId(userId);
-        updatedUser.setName("Ivan Updated");
-        updatedUser.setEmail("ivan@example.com");
-
         UserDtoResponse expectedResponse = new UserDtoResponse(userId, "Ivan Updated", "ivan@example.com");
 
         // Мокирование
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(existingUser)).thenReturn(updatedUser);
-        when(userMapper.toUserDtoResponse(updatedUser)).thenReturn(expectedResponse);
+        when(userMapper.toUserDtoResponse(existingUser)).thenReturn(expectedResponse);
 
         UserDtoResponse actualResponse = userService.update(userId, updateDto);
 
@@ -161,8 +148,7 @@ class UserServiceImplUnitTest {
 
         verify(userRepository).findById(userId);
         verify(userRepository, never()).existsByEmail(any());
-        verify(userRepository).save(existingUser);
-        verify(userMapper).toUserDtoResponse(updatedUser);
+        verify(userMapper).toUserDtoResponse(existingUser);
     }
 
     @Test

@@ -21,6 +21,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
@@ -66,9 +67,7 @@ public class BookingServiceImpl implements BookingService {
 
         Status newStatus = confirmation ? Status.APPROVED : Status.REJECTED;
         existingBooking.setStatus(newStatus);
-
-        Booking updateBooking = bookingRepository.save(existingBooking);
-        return bookingMapper.toBookingDtoResponse(updateBooking);
+        return bookingMapper.toBookingDtoResponse(existingBooking);
     }
 
     @Override
@@ -86,7 +85,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingDtoResponse> getBookingsByUser(Long userId, BookingState state) {
         if (!userRepository.existsById(userId)) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не найден");
@@ -125,7 +123,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingDtoResponse> getBookingsForItems(Long userId, BookingState bookingState) {
         if (!userRepository.existsById(userId)) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не найден");

@@ -23,7 +23,6 @@ import java.util.Objects;
 public class ItemMapper {
     private final ItemRequestMapper itemRequestMapper;
     private final BookingMapper bookingMapper;
-    private final CommentMapper commentMapper;
 
     public ItemDtoResponse toItemDtoResponse(Item item) {
         Objects.requireNonNull(item, "Вещь (Item) не должна быть null");
@@ -71,7 +70,7 @@ public class ItemMapper {
                 .description(item.getDescription())
                 .available(item.getAvailable())
                 .comments(item.getComments().stream()
-                        .map(comment -> commentMapper.toCommentDtoResponse(user, comment))
+                        .map(comment -> CommentMapper.toCommentDtoResponse(user, comment))
                         .toList());
 
         // Сведения о бронированиях предоставляем только владельцу вещи
