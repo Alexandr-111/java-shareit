@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.jackson.Jacksonized;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.dto.ItemRequestDtoChange;
 import ru.practicum.shareit.validate.OnCreate;
 import ru.practicum.shareit.validate.OnUpdate;
@@ -30,6 +29,6 @@ public class ItemDtoChange {
     private Boolean available;
 
     @Null(groups = OnUpdate.class, message = "Поле недоступно при обновлении")
-    @Valid   // Для проверки вложенного объекта
+    @Valid
     private ItemRequestDtoChange requestDto;
 }

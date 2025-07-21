@@ -64,4 +64,18 @@ public class AppExceptionHandler {
                 "Операция не выполнена из-за ошибки на сервере");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(ItemUnavailableException.class)
+    public ResponseEntity<Response> handleItemUnavailableException(ItemUnavailableException ex) {
+        log.warn("Выброшено исключение ItemUnavailableException: {}", ex.getMessage());
+        Response response = new Response("Вещь недоступна для бронирования", ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CommentNotAllowedException.class)
+    public ResponseEntity<Response> handleCommentNotAllowedException(CommentNotAllowedException ex) {
+        log.warn("Выброшено исключение CommentNotAllowedException: {}", ex.getMessage());
+        Response response = new Response("Пользователь не имеет права оставлять отзыв", ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 }

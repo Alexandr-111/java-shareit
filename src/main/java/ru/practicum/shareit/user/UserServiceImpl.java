@@ -3,6 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.user.dto.UserDtoChange;
@@ -13,50 +14,50 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public UserDtoResponse create(UserDtoChange userDtoChange) {
         log.debug("Вызван метод UserService.create(). Получен объект UserDtoChange {}", userDtoChange);
 
-        if (userStorage.findEmail(userDtoChange.getEmail())) {
+        if (userRepository.existsByEmail(userDtoChange.getEmail())) {
             throw new ConflictException("Такой email уже зарегистрирован, необходимо использовать другой.");
         }
         User user = userMapper.toUser(userDtoChange);
-        User createdUser = userStorage.create(user);
+        User createdUser = userRepository.save(user);
         return userMapper.toUserDtoResponse(createdUser);
     }
 
     @Override
+    @Transactional
     public UserDtoResponse update(Long userId, UserDtoChange userDtoChange) {
         log.debug("Вызван метод UserService.update(). Получены объекты Long {} и UserDtoChange {}",
                 userId, userDtoChange);
 
-        User existingUser = userStorage.getUserById(userId)
+        User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("Пользователь с id " + userId + " не найден"));
 
-        if (userDtoChange.getEmail() != null) {
-            if (userStorage.findEmail(userDtoChange.getEmail())) {
+        if (userDtoChange.getEmail() != null && !userDtoChange.getEmail().equals(existingUser.getEmail())) {
+            if (userRepository.existsByEmail(userDtoChange.getEmail())) {
                 throw new ConflictException("Такой email уже зарегистрирован, необходимо использовать другой.");
             }
+            existingUser.setEmail(userDtoChange.getEmail());
         }
 
         if (userDtoChange.getName() != null) {
             existingUser.setName(userDtoChange.getName());
         }
-        if (userDtoChange.getEmail() != null) {
-            existingUser.setEmail(userDtoChange.getEmail());
-        }
-        User updatedUser = userStorage.update(existingUser);
-        return userMapper.toUserDtoResponse(updatedUser);
+        return userMapper.toUserDtoResponse(existingUser);
     }
 
     @Override
     public List<UserDtoResponse> getAll() {
         log.debug("Вызван метод UserService.getAll()");
-        List<User> users = userStorage.getAll();
+        List<User> users = userRepository.findAll();
         return users.stream()
                 .map(userMapper::toUserDtoResponse)
                 .toList();
@@ -65,17 +66,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDtoResponse getUserById(long id) {
         log.debug("Вызван метод UserService.getUserById() c ID = {}", id);
-        User userFound = userStorage.getUserById(id)
+        User userFound = userRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Пользователь с id " + id + " не найден"));
         return userMapper.toUserDtoResponse(userFound);
     }
 
     @Override
+    @Transactional
     public void deleteUser(long id) {
         log.debug("Вызван метод UserService.deleteUser() c ID = {}", id);
-        if (userStorage.userNotExists(id)) {
+        if (!userRepository.existsById(id)) {
             throw new DataNotFoundException("Пользователь с id " + id + " не найден");
         }
-        userStorage.deleteUser(id);
+        userRepository.deleteById(id);
     }
 }
