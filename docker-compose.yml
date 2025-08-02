@@ -6,7 +6,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     environment:
       - SHAREIT_SERVER_URL=http://server:9090
     networks:
@@ -19,7 +20,8 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_USERNAME=shareit
       - SPRING_DATASOURCE_PASSWORD=shareit
@@ -32,7 +34,7 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:9090/actuator/health || exit 1" ]
       interval: 10s
-      timeout: 5s
+      timeout: 6s
       retries: 10
       start_period: 30s
     networks:
@@ -51,9 +53,10 @@ services:
       - PGTZ=UTC  # Устанавливаем часовой пояс для PostgreSQL
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
+      timeout: 6s
       interval: 5s
       retries: 10
+      start_period: 30s
     networks:
       - shareit-net
 
