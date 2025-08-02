@@ -34,13 +34,10 @@ public class BaseClient {
     protected final RestTemplate rest;
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    {
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    }
-
     public BaseClient(RestTemplate rest) {
         this.rest = rest;
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     protected <T> List<T> convertToList(Object rawBody, Class<T> elementType) {

@@ -10,6 +10,7 @@ public class ShareItGateway {
     public static void main(String[] args) {
         SpringApplication.run(ShareItGateway.class, args);
     }
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

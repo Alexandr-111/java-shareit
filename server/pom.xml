@@ -81,21 +81,14 @@
     </dependencies>
 
     <build>
+        <finalName>server-file</finalName> <!-- Имя JAR для server -->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>ru.practicum.shareit.ShareItServer</mainClass>
-                    <finalName>server-file</finalName> <!-- Имя JAR для server -->
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
