@@ -1,10 +1,23 @@
 services:
+  gateway:
+    build: gateway
+    image: shareit-gateway
+    container_name: shareit-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
+    environment:
+      - SHAREIT_SERVER_URL=http://server:9090
+    networks:
+      - shareit-net
+
   server:
-    build: .
+    build: server
     image: shareit-server
     container_name: shareit-server
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
       - db
     environment:
@@ -14,8 +27,16 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=UTC
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit?timeZone=UTC
       - SPRING_JPA_PROPERTIES_JAKARTA_PERSISTENCE_JDBC_TIME_ZONE=UTC
-      - LOGGING_LEVEL_ORG_HIBERNATE=DEBUG
-      - LOGGING_LEVEL_ORG_POSTGRES=DEBUG
+      - LOGGING_LEVEL_ORG_HIBERNATE=INFO
+      - LOGGING_LEVEL_ORG_POSTGRES=INFO
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9090/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - shareit-net
 
   db:
     image: postgres:16.1
@@ -33,3 +54,10 @@ services:
       timeout: 5s
       interval: 5s
       retries: 10
+    networks:
+      - shareit-net
+
+networks:
+ shareit-net:
+  driver: bridge
+  name: shareit-network
