@@ -42,7 +42,7 @@ public class BookingClient extends BaseClient {
     public BookingDtoResponse create(Long userId, BookingDtoChange bookingDtoChange) {
         ResponseEntity<Object> response = post("", userId, bookingDtoChange);
         return objectMapper.convertValue(response.getBody(), BookingDtoResponse.class);
-        }
+    }
 
     public BookingDtoResponse update(Long userId, Long bookingId, Boolean confirmation) {
 

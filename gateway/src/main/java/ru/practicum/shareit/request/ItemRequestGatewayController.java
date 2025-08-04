@@ -1,6 +1,8 @@
 package ru.practicum.shareit.request;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.groups.Default;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.shareit.request.dto.ItemRequestDtoChange;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
@@ -56,9 +59,13 @@ public class ItemRequestGatewayController {
 
     @GetMapping("/all")
     public ResponseEntity<List<ItemRequestDtoResponse>> getAllRequests(
-            @Positive(message = "ID должен быть положительным") @RequestHeader(USER_ID) Long userId) {
+            @Positive(message = "ID должен быть положительным") @RequestHeader(USER_ID) Long userId,
+            @PositiveOrZero @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @Max(value = 100, message = "Размер страницы не может превышать 100")
+            @Positive
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("ItemRequestGatewayController. Начато получение списка всех запросов на вещи");
-        return itemRequestClient.getAllRequests(userId);
+        return itemRequestClient.getAllRequests(userId, from, size);
     }
 
     @GetMapping("/{requestId}")

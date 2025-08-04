@@ -57,8 +57,9 @@ public class BaseClient {
         }
     }
 
-    protected <T> ResponseEntity<List<T>> getList(String path, Class<T> responseType) {
-        return getList(path, null, null, responseType);
+    protected <T> ResponseEntity<List<T>> getList(String path, Map<String, Object> parameters,
+                                                  Class<T> responseType) {
+        return getList(path, null, parameters, responseType);
     }
 
     protected <T> ResponseEntity<List<T>> getList(String path, Long userId, Class<T> responseType) {

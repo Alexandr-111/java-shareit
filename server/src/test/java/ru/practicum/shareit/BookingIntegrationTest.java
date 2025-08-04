@@ -12,13 +12,13 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
-import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.booking.BookingRepository;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -27,9 +27,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -125,39 +128,7 @@ class BookingIntegrationTest {
 
     @Test
     void shouldValidateBookingDates() throws Exception {
-        // Начало бронирования в прошлом
-        LocalDateTime pastStart = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = pastStart.plusDays(2);
-
-        String pastStartJson = "{\"start\":\"" + pastStart.format(formatter) +
-                "\",\"end\":\"" + end.format(formatter) +
-                "\",\"itemId\":" + item.getId() + "}";
-
-        mockMvc.perform(post("/bookings")
-                        .header(ID_USER, booker.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(pastStartJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.start")
-                        .value("Дата начала бронирования должна быть в будущем или настоящем"));
-
-        // Конец бронирования не в будущем
-        LocalDateTime start = LocalDateTime.now().plusDays(1);
-        LocalDateTime pastEnd = LocalDateTime.now().minusDays(1);
-
-        String pastEndJson = "{\"start\":\"" + start.format(formatter) +
-                "\",\"end\":\"" + pastEnd.format(formatter) +
-                "\",\"itemId\":" + item.getId() + "}";
-
-        mockMvc.perform(post("/bookings")
-                        .header(ID_USER, booker.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(pastEndJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.end")
-                        .value("Дата окончания бронирования должна быть в будущем"));
-
-        // Начало позже окончания
+        // Начало бронирования позже окончания
         LocalDateTime validStart = LocalDateTime.now().plusDays(2);
         LocalDateTime beforeStart = validStart.minusDays(1);
 
@@ -172,29 +143,6 @@ class BookingIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.description")
                         .value("Дата начала бронирования не может быть позже даты окончания"));
-
-        // Отсутствие даты начала
-        String noStartJson = "{\"end\":\"" + end.format(formatter) +
-                "\",\"itemId\":" + item.getId() + "}";
-
-        mockMvc.perform(post("/bookings")
-                        .header(ID_USER, booker.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noStartJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.start")
-                        .value("Поле Начало аренды - обязательно"));
-
-        // Отсутствие даты окончания
-        String noEndJson = "{\"start\":\"" + start.format(formatter) +
-                "\",\"itemId\":" + item.getId() + "}";
-
-        mockMvc.perform(post("/bookings")
-                        .header(ID_USER, booker.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noEndJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.end").value("Поле Конец аренды - обязательно"));
     }
 
     @Test

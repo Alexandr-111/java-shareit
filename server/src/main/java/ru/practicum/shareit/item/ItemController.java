@@ -1,7 +1,5 @@
 package ru.practicum.shareit.item;
 
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.groups.Default;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +20,12 @@ import ru.practicum.shareit.item.dto.ItemDtoChange;
 import ru.practicum.shareit.item.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDtoShort;
 import ru.practicum.shareit.item.dto.ItemDtoWithDetails;
-import ru.practicum.shareit.validate.OnCreate;
-import ru.practicum.shareit.validate.OnUpdate;
 
 import java.net.URI;
 import java.util.List;
 
 @Slf4j
 @Controller
-@Validated
 @RequestMapping("/items")
 @RequiredArgsConstructor
 public class ItemController {
@@ -38,9 +33,7 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ResponseEntity<ItemDtoResponse> createItem(@Positive
-                                                      @RequestHeader(USER_ID) Long userId,
-                                                      @Validated({OnCreate.class, Default.class})
+    public ResponseEntity<ItemDtoResponse> createItem(@RequestHeader(USER_ID) Long userId,
                                                       @RequestBody ItemDtoChange itemDtoChange) {
         log.debug("ItemController. Создание вещи пользователем с ID {}. Получен объект {}",
                 userId, itemDtoChange);
@@ -54,11 +47,8 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ResponseEntity<ItemDtoResponse> updateItem(@Positive(message = "ID должен быть положительным")
-                                                      @RequestHeader(USER_ID) Long userId,
-                                                      @Positive(message = "ID должен быть положительным")
+    public ResponseEntity<ItemDtoResponse> updateItem(@RequestHeader(USER_ID) Long userId,
                                                       @PathVariable Long itemId,
-                                                      @Validated({OnUpdate.class, Default.class})
                                                       @RequestBody ItemDtoChange itemDtoChange) {
         log.debug("ItemController. Обновление вещи с ID {}. Пользователем с ID {}. Получен объект {}",
                 itemId, userId, itemDtoChange);
@@ -67,9 +57,7 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<ItemDtoWithDetails> foundItem(@Positive(message = "ID должен быть положительным")
-                                                        @RequestHeader(USER_ID) Long userId,
-                                                        @Positive(message = "ID должен быть положительным")
+    public ResponseEntity<ItemDtoWithDetails> foundItem(@RequestHeader(USER_ID) Long userId,
                                                         @PathVariable Long itemId) {
         log.debug("ItemController. Получение вещи с ID {}. Пользователем с ID {}", itemId, userId);
         ItemDtoWithDetails readyDto = itemService.getItemById(userId, itemId);
@@ -78,16 +66,14 @@ public class ItemController {
 
     // Просмотр владельцем списка всех его вещей, с указанием названия и описания для каждой из них
     @GetMapping
-    public ResponseEntity<List<ItemDtoShort>> getItemsByOwner(@Positive(message = "ID должен быть положительным")
-                                                              @RequestHeader(USER_ID) Long userId) {
+    public ResponseEntity<List<ItemDtoShort>> getItemsByOwner(@RequestHeader(USER_ID) Long userId) {
         log.debug("ItemController. Получение всех его вещей, пользователем с ID {}", userId);
         List<ItemDtoShort> itemDtos = itemService.getItemsByOwner(userId);
         return ResponseEntity.ok(itemDtos);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ItemDtoResponse>> searchItems(@Positive(message = "ID должен быть положительным")
-                                                             @RequestHeader(USER_ID) Long userId,
+    public ResponseEntity<List<ItemDtoResponse>> searchItems(@RequestHeader(USER_ID) Long userId,
                                                              @RequestParam String text) {
         log.debug("ItemController. Поиск вещи по запросу - {}, пользователем с ID {}", text, userId);
         List<ItemDtoResponse> itemDtos = itemService.searchItems(userId, text);
@@ -95,10 +81,9 @@ public class ItemController {
     }
 
     @PostMapping("/{itemId}/comment")
-    public ResponseEntity<CommentDtoResponse> createComment(
-            @Positive @RequestHeader(USER_ID) Long userId,
-            @Positive(message = "ID должен быть положительным") @PathVariable Long itemId,
-            @Validated({OnCreate.class, Default.class}) @RequestBody CommentDtoChange commentDtoChange) {
+    public ResponseEntity<CommentDtoResponse> createComment(@RequestHeader(USER_ID) Long userId,
+                                                            @PathVariable Long itemId,
+                                                            @RequestBody CommentDtoChange commentDtoChange) {
         log.debug("ItemController. Создание отзыва на вещь с ID {}, пользователем с ID {}. Получен объект {}",
                 itemId, userId, commentDtoChange);
         CommentDtoResponse readyDto = itemService.createComment(itemId, userId, commentDtoChange);

@@ -12,6 +12,7 @@ import ru.practicum.shareit.request.dto.ItemRequestDtoChange;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ItemRequestClient extends BaseClient {
@@ -36,8 +37,12 @@ public class ItemRequestClient extends BaseClient {
         return getList("", userId, ItemRequestDtoResponse.class);
     }
 
-    public ResponseEntity<List<ItemRequestDtoResponse>> getAllRequests(Long userId) {
-        return getList("/all", userId, ItemRequestDtoResponse.class);
+    public ResponseEntity<List<ItemRequestDtoResponse>> getAllRequests(Long userId, Integer from, Integer size) {
+        Map<String, Object> parameters = Map.of(
+                "from", from,
+                "size", size
+        );
+        return getList("/all", userId, parameters, ItemRequestDtoResponse.class);
     }
 
     public ResponseEntity<ItemRequestDtoResponse> getRequestById(Long userId, Long requestId) {

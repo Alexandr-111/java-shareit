@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -67,7 +68,9 @@ public class BookingGatewayController {
             @Positive(message = "ID должен быть положительным") @RequestHeader(USER_ID) Long userId,
             @RequestParam(name = "state", required = false, defaultValue = "ALL") String stateParam,
             @PositiveOrZero @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
-            @Positive @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
+            @Positive
+            @Max(value = 100, message = "Размер страницы не может превышать 100")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         BookingState state = BookingState.from(stateParam)
                 .orElseThrow(() -> new DataNotFoundException("Не найден статус: " + stateParam));
         log.info("BookingGatewayController. Получение списка бронирований: state {}, userId={}, from={}, size={}",
@@ -91,9 +94,9 @@ public class BookingGatewayController {
             @PositiveOrZero @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
             @Positive @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
 
-            log.debug("BookingGatewayController. Получение бронирований для всех вещей пользователя с ID {}", userId);
-            BookingState state = BookingState.from(stateParam)
-                    .orElseThrow(() -> new DataNotFoundException("Не найден статус: " + stateParam));
-            return bookingClient.getBookingsForItems(userId, state, from, size);
-        }
+        log.debug("BookingGatewayController. Получение бронирований для всех вещей пользователя с ID {}", userId);
+        BookingState state = BookingState.from(stateParam)
+                .orElseThrow(() -> new DataNotFoundException("Не найден статус: " + stateParam));
+        return bookingClient.getBookingsForItems(userId, state, from, size);
+    }
 }

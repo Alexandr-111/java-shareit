@@ -1,6 +1,8 @@
 package ru.practicum.shareit.user;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.groups.Default;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.shareit.exception.Response;
 import ru.practicum.shareit.user.dto.UserDtoChange;
@@ -56,9 +59,14 @@ public class UserGatewayController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDtoResponse>> getAllUsers() {
+    public ResponseEntity<List<UserDtoResponse>> getAllUsers(
+            @PositiveOrZero
+            @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @Positive
+            @Max(value = 100, message = "Размер страницы не может превышать 100")
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("UserGatewayController. Начато получение списка всех пользователей");
-        return userClient.getAll();
+        return userClient.getAll(from, size);
     }
 
     @GetMapping("/{id}")

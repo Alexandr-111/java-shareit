@@ -12,6 +12,7 @@ import ru.practicum.shareit.user.dto.UserDtoChange;
 import ru.practicum.shareit.user.dto.UserDtoResponse;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserClient extends BaseClient {
@@ -39,8 +40,12 @@ public class UserClient extends BaseClient {
         return objectMapper.convertValue(response.getBody(), UserDtoResponse.class);
     }
 
-    public ResponseEntity<List<UserDtoResponse>> getAll() {
-        return getList("", UserDtoResponse.class);
+    public ResponseEntity<List<UserDtoResponse>> getAll(Integer from, Integer size) {
+        Map<String, Object> parameters = Map.of(
+                "from", from,
+                "size", size
+        );
+        return getList("", parameters, UserDtoResponse.class);
     }
 
     public ResponseEntity<UserDtoResponse> getUserById(Long id) {

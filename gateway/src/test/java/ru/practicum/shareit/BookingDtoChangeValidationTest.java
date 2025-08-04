@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import jakarta.validation.groups.Default;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import ru.practicum.shareit.booking.dto.BookingDtoChange;
@@ -96,5 +97,53 @@ public class BookingDtoChangeValidationTest {
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
                 .isEqualTo(expectedMessage);
+    }
+
+    @Test
+    void pastStartOnCreate_shouldFailValidation() {
+        BookingDtoChange dto = BookingDtoChange.builder()
+                .start(LocalDateTime.now().minusDays(1))
+                .end(LocalDateTime.now().plusDays(1))
+                .itemId(1L)
+                .build();
+
+        Set<ConstraintViolation<BookingDtoChange>> violations =
+                validator.validate(dto, OnCreate.class, Default.class);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("Дата начала бронирования должна быть в будущем или настоящем");
+    }
+
+    @Test
+    void pastEndOnCreate_shouldFailValidation() {
+        BookingDtoChange dto = BookingDtoChange.builder()
+                .start(LocalDateTime.now().plusDays(1))
+                .end(LocalDateTime.now().minusDays(1))
+                .itemId(1L)
+                .build();
+
+        Set<ConstraintViolation<BookingDtoChange>> violations =
+                validator.validate(dto, OnCreate.class, Default.class);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("Дата окончания бронирования должна быть в будущем");
+    }
+
+    @Test
+    void presentEndOnCreate_shouldFailValidation() {
+        BookingDtoChange dto = BookingDtoChange.builder()
+                .start(LocalDateTime.now().plusDays(1))
+                .end(LocalDateTime.now())
+                .itemId(1L)
+                .build();
+
+        Set<ConstraintViolation<BookingDtoChange>> violations =
+                validator.validate(dto, OnCreate.class, Default.class);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("Дата окончания бронирования должна быть в будущем");
     }
 }
