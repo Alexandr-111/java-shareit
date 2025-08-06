@@ -2,6 +2,10 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDtoChange;
@@ -17,7 +21,6 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -89,45 +92,42 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> getBookingsByUser(Long userId, BookingState state) {
+    public Page<BookingDtoResponse> getBookingsByUser(Long userId, BookingState state, int from, int size) {
         if (!userRepository.existsById(userId)) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не найден");
         }
         LocalDateTime now = LocalDateTime.now();
         log.info("Пользователь userId={}, Статус бронирования state={}, текущее время now={}", userId, state, now);
-        List<Booking> bookings;
+        Page<Booking> bookings;
+        Pageable pageable = PageRequest.of(from / size, size,
+                Sort.by(Sort.Direction.DESC, "start"));
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByBookerIdOrderByStartDesc(userId);
+                bookings = bookingRepository.findByBookerIdOrderByStartDesc(userId, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentByBooker(userId);
+                bookings = bookingRepository.findCurrentByBooker(userId, now, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByBookerIdAndEndBeforeOrderByStartDesc(userId, now);
+                bookings = bookingRepository.findByBookerIdAndEndBeforeOrderByStartDesc(userId, now, pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByBookerIdAndStartAfterOrderByStartDesc(userId, now);
+                bookings = bookingRepository.findByBookerIdAndStartAfterOrderByStartDesc(userId, now, pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(userId, Status.WAITING);
+                bookings = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(userId, Status.WAITING, pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(userId, Status.REJECTED);
+                bookings = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(userId, Status.REJECTED, pageable);
                 break;
             default:
                 throw new IllegalArgumentException("Несуществующий статус бронирования");
         }
-        log.info("Result bookings: {}", bookings);
-        List<BookingDtoResponse> bookingsDtos = bookings.stream()
-                .map(bookingMapper::toBookingDtoResponse)
-                .toList();
-        log.info("Result BookingDtoResponse: {}", bookingsDtos);
-        return bookingsDtos;
+        return bookings.map(bookingMapper::toBookingDtoResponse);
     }
 
     @Override
-    public List<BookingDtoResponse> getBookingsForItems(Long userId, BookingState bookingState) {
+    public Page<BookingDtoResponse> getBookingsForItems(Long userId, BookingState state, int from, int size) {
         if (!userRepository.existsById(userId)) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не найден");
         }
@@ -135,33 +135,33 @@ public class BookingServiceImpl implements BookingService {
             throw new DataNotFoundException("Пользователь с id " + userId + " не является владельцем ни одной вещи");
         }
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> bookings;
+        Page<Booking> bookings;
+        Pageable pageable = PageRequest.of(from / size, size,
+                Sort.by(Sort.Direction.DESC, "start"));
 
-        switch (bookingState) {
+        switch (state) {
             case ALL:
-                bookings = bookingRepository.findByItemOwnerIdOrderByStartDesc(userId);
+                bookings = bookingRepository.findByItemOwnerIdOrderByStartDesc(userId, pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentByItemOwner(userId);
+                bookings = bookingRepository.findCurrentByItemOwner(userId, now, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByItemOwnerIdAndEndBeforeOrderByStartDesc(userId, now);
+                bookings = bookingRepository.findByItemOwnerIdAndEndBeforeOrderByStartDesc(userId, now, pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByItemOwnerIdAndStartAfterOrderByStartDesc(userId, now);
+                bookings = bookingRepository.findByItemOwnerIdAndStartAfterOrderByStartDesc(userId, now, pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(userId, Status.WAITING);
+                bookings = bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(userId, Status.WAITING, pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(userId, Status.REJECTED);
+                bookings = bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(userId, Status.REJECTED, pageable);
                 break;
             default:
                 throw new IllegalArgumentException("Несуществующий статус бронирования");
         }
 
-        return bookings.stream()
-                .map(bookingMapper::toBookingDtoResponse)
-                .toList();
+        return bookings.map(bookingMapper::toBookingDtoResponse);
     }
 }

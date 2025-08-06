@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,13 +14,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import ru.practicum.shareit.PageResponse;
 import ru.practicum.shareit.booking.dto.BookingDtoChange;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.dto.BookingState;
 import ru.practicum.shareit.exception.DataNotFoundException;
 
 import java.net.URI;
-import java.util.List;
 
 @Slf4j
 @Controller
@@ -62,9 +63,11 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDtoResponse>> getBookingsByUser(
+    public ResponseEntity<PageResponse<BookingDtoResponse>> getBookingsByUser(
             @RequestHeader(USER_ID) Long userId,
-            @RequestParam(name = "state", required = false, defaultValue = "ALL") String stateParam) {
+            @RequestParam(name = "state", required = false, defaultValue = "ALL") String stateParam,
+            @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("Получение списка бронирований пользователя с ID {}", userId);
         BookingState bookingState;
         try {
@@ -72,15 +75,24 @@ public class BookingController {
         } catch (IllegalArgumentException e) {
             throw new DataNotFoundException("Не найден статус: " + stateParam);
         }
-        List<BookingDtoResponse> bookings = bookingService.getBookingsByUser(userId, bookingState);
-        System.out.println("Found bookings: " + bookings.size());
-        return ResponseEntity.ok(bookings);
+        Page<BookingDtoResponse> page = bookingService.getBookingsByUser(userId, bookingState, from, size);
+
+        PageResponse<BookingDtoResponse> response = new PageResponse<>();
+        response.setContent(page.getContent());
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/owner")
-    public ResponseEntity<List<BookingDtoResponse>> getBookingsForItems(
+    public ResponseEntity<PageResponse<BookingDtoResponse>> getBookingsForItems(
             @RequestHeader(USER_ID) Long userId,
-            @RequestParam(name = "state", required = false, defaultValue = "ALL") String stateParam) {
+            @RequestParam(name = "state", required = false, defaultValue = "ALL") String stateParam,
+            @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("Получение бронирований для всех вещей пользователя с ID {}", userId);
         BookingState bookingState;
         try {
@@ -88,7 +100,15 @@ public class BookingController {
         } catch (IllegalArgumentException e) {
             throw new DataNotFoundException("Не найден статус: " + stateParam);
         }
-        List<BookingDtoResponse> bookings = bookingService.getBookingsForItems(userId, bookingState);
-        return ResponseEntity.ok(bookings);
+        Page<BookingDtoResponse> page = bookingService.getBookingsForItems(userId, bookingState, from, size);
+
+        PageResponse<BookingDtoResponse> response = new PageResponse<>();
+        response.setContent(page.getContent());
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 }

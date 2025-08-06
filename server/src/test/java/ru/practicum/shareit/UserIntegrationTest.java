@@ -1,5 +1,6 @@
 package ru.practicum.shareit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,17 +14,22 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.practicum.shareit.exception.DataNotFoundException;
-import ru.practicum.shareit.user.dto.UserDtoChange;
 import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.dto.UserDtoChange;
+import ru.practicum.shareit.user.dto.UserDtoResponse;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -142,7 +148,7 @@ class UserIntegrationTest {
     }
 
     @Test
-    void shouldReturnAllUsers() throws Exception {
+    void shouldReturnAllUsersWithPagination() throws Exception {
         // Создаем двух пользователей с валидными email
         UserDtoChange user1 = new UserDtoChange();
         user1.setEmail("first-user@example.com");
@@ -162,15 +168,27 @@ class UserIntegrationTest {
                         .content(objectMapper.writeValueAsString(user2)))
                 .andExpect(status().isCreated());
 
-        // Получаем всех пользователей
-        MvcResult result = mockMvc.perform(get("/users"))
+        // Получаем всех пользователей с пагинацией
+        MvcResult result = mockMvc.perform(get("/users")
+                        .param("from", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").exists())
+                .andExpect(jsonPath("$.totalPages").exists())
                 .andReturn();
 
         String response = result.getResponse().getContentAsString();
-        List<?> users = objectMapper.readValue(response, List.class);
 
-        assertEquals(2, users.size());
+        // Используем TypeReference для правильного парсинга вложенной структуры
+        PageResponse<UserDtoResponse> pageResponse = objectMapper.readValue(response,
+                new TypeReference<PageResponse<UserDtoResponse>>() {
+                });
+
+        // Проверяем общее количество элементов
+        assertEquals(2, pageResponse.getTotalElements());
+
+        // Проверяем количество элементов на странице
+        assertEquals(2, pageResponse.getContent().size());
     }
 }

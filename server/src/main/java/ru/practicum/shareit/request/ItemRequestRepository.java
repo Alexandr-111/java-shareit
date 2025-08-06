@@ -1,5 +1,7 @@
 package ru.practicum.shareit.request;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +19,7 @@ public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> 
     List<ItemRequest> findByRequestorIdWithItems(@Param("requestorId") Long requestorId);
 
     @EntityGraph(attributePaths = {"items"})
-    List<ItemRequest> findAllByOrderByCreatedDesc();
+    Page<ItemRequest> findAllByOrderByCreatedDesc(Pageable pageable);
 
     @Query("SELECT ir FROM ItemRequest ir " +
             "LEFT JOIN FETCH ir.items " +

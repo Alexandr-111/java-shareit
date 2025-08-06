@@ -36,7 +36,7 @@ public class BookingClient extends BaseClient {
                 "from", from,
                 "size", size
         );
-        return getList("", userId, parameters, BookingDtoResponse.class);
+        return getPageList("", userId, parameters);
     }
 
     public BookingDtoResponse create(Long userId, BookingDtoChange bookingDtoChange) {
@@ -64,6 +64,6 @@ public class BookingClient extends BaseClient {
                 "from", from,
                 "size", size
         );
-        return getList("/owner", userId, parameters, BookingDtoResponse.class);
+        return getPageList("/owner", userId, parameters);
     }
 }

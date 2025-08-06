@@ -5,6 +5,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.user.User;
@@ -194,21 +199,36 @@ class UserServiceImplUnitTest {
     }
 
     @Test
-    void getAll_shouldReturnEmptyListWhenNoUsers() {
+    void getAll_shouldReturnEmptyPageWhenNoUsers() {
+        int from = 0;
+        int size = 10;
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"));
 
-        when(userRepository.findAll()).thenReturn(Collections.emptyList());
+        Page<User> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-        List<UserDtoResponse> result = userService.getAll();
+        when(userRepository.findAll(pageable)).thenReturn(emptyPage);
+
+        Page<UserDtoResponse> result = userService.getAll(from, size);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
+        assertEquals(0, result.getTotalPages());
+        assertEquals(0, result.getContent().size());
 
-        verify(userRepository).findAll();
+        verify(userRepository).findAll(pageable);
         verifyNoInteractions(userMapper);
     }
 
     @Test
-    void getAll_shouldReturnListOfUsers() {
+    void getAll_shouldReturnPageOfUsers() {
+        // Подготовка тестовых данных
+        int from = 0;
+        int size = 10;
+
+        Pageable pageable = PageRequest.of(from / size, size,
+                Sort.by(Sort.Direction.DESC, "id"));
+
         User user1 = new User();
         user1.setId(1L);
         user1.setName("Ivan Ivanov");
@@ -222,19 +242,28 @@ class UserServiceImplUnitTest {
         UserDtoResponse dto1 = new UserDtoResponse(1L, "Ivan Ivanov", "ivan@example.com");
         UserDtoResponse dto2 = new UserDtoResponse(2L, "Petr Petrov", "petr@example.com");
 
-        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+        Page<User> userPage = new PageImpl<>(
+                List.of(user1, user2),
+                pageable,
+                2
+        );
+
+        when(userRepository.findAll(pageable)).thenReturn(userPage);
         when(userMapper.toUserDtoResponse(user1)).thenReturn(dto1);
         when(userMapper.toUserDtoResponse(user2)).thenReturn(dto2);
 
-        List<UserDtoResponse> result = userService.getAll();
+        Page<UserDtoResponse> result = userService.getAll(from, size);
 
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals(dto1, result.get(0));
-        assertEquals(dto2, result.get(1));
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(2, result.getContent().size());
+        assertEquals(dto1, result.getContent().get(0));
+        assertEquals(dto2, result.getContent().get(1));
 
-        verify(userRepository).findAll();
-        verify(userMapper, times(2)).toUserDtoResponse(any());
+        verify(userRepository).findAll(pageable);
+        verify(userMapper, times(1)).toUserDtoResponse(user1);
+        verify(userMapper, times(1)).toUserDtoResponse(user2);
     }
 
     @Test

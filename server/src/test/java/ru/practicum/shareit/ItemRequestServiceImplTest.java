@@ -5,6 +5,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.dto.ItemForRequestDto;
@@ -116,24 +121,46 @@ class ItemRequestServiceImplTest {
                 DataNotFoundException.class,
                 () -> itemRequestService.getRequestsByOwner(userId)
         );
-
         assertEquals("Пользователь с id " + userId + " не найден", exception.getMessage());
         verify(userRepository).existsById(userId);
         verifyNoInteractions(itemRequestRepository, itemRequestMapper);
     }
 
     @Test
-    void getAllRequests_shouldReturnAllRequests() {
-        when(itemRequestRepository.findAllByOrderByCreatedDesc()).thenReturn(List.of(request));
-        when(itemRequestMapper.toItemRequestDtoResponse(any(ItemRequest.class))).thenReturn(responseDto);
+    void getAllRequests_shouldReturnPageOfRequests() {
+        // Подготовка параметров пагинации
+        int from = 0;
+        int size = 10;
 
-        List<ItemRequestDtoResponse> result = itemRequestService.getAllRequests();
+        // Создаем объект пагинации
+        Pageable pageable = PageRequest.of(from / size, size,
+                Sort.by(Sort.Direction.DESC, "created"));
 
+        // Создаем страницу с одним запросом
+        Page<ItemRequest> requestPage = new PageImpl<>(
+                List.of(request),
+                pageable,
+                1
+        );
+
+        // Мокирование
+        when(itemRequestRepository.findAllByOrderByCreatedDesc(pageable))
+                .thenReturn(requestPage);
+        when(itemRequestMapper.toItemRequestDtoResponse(any(ItemRequest.class)))
+                .thenReturn(responseDto);
+
+        // Вызов тестируемого метода
+        Page<ItemRequestDtoResponse> result = itemRequestService.getAllRequests(from, size);
+
+        // Проверки
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(responseDto.getId(), result.getFirst().getId());
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(1, result.getContent().size());
+        assertEquals(responseDto.getId(), result.getContent().getFirst().getId());
 
-        verify(itemRequestRepository).findAllByOrderByCreatedDesc();
+        // Проверка взаимодействий
+        verify(itemRequestRepository).findAllByOrderByCreatedDesc(pageable);
         verify(itemRequestMapper).toItemRequestDtoResponse(request);
     }
 

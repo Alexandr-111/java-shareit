@@ -2,14 +2,16 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.DataNotFoundException;
 import ru.practicum.shareit.user.dto.UserDtoChange;
 import ru.practicum.shareit.user.dto.UserDtoResponse;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -55,12 +57,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDtoResponse> getAll() {
+    public Page<UserDtoResponse> getAll(int from, int size) {
         log.debug("Вызван метод UserService.getAll()");
-        List<User> users = userRepository.findAll();
-        return users.stream()
-                .map(userMapper::toUserDtoResponse)
-                .toList();
+        int pageNumber = from / size;
+        Pageable pageable = PageRequest.of(pageNumber, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<User> userPage = userRepository.findAll(pageable);
+        return userPage.map(userMapper::toUserDtoResponse);
     }
 
     @Override

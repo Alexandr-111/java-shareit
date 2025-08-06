@@ -2,6 +2,7 @@ package ru.practicum.shareit.request;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import ru.practicum.shareit.PageResponse;
 import ru.practicum.shareit.request.dto.ItemRequestDtoChange;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
 
@@ -49,10 +52,20 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ItemRequestDtoResponse>> getAllRequests() {
+    public ResponseEntity<PageResponse<ItemRequestDtoResponse>> getAllRequests(
+            @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("ItemRequestController. Начато получение списка всех запросов");
-        List<ItemRequestDtoResponse> itemRequestDtos = itemRequestService.getAllRequests();
-        return ResponseEntity.ok(itemRequestDtos);
+        Page<ItemRequestDtoResponse> page = itemRequestService.getAllRequests(from, size);
+
+        PageResponse<ItemRequestDtoResponse> response = new PageResponse<>();
+        response.setContent(page.getContent());
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{requestId}")

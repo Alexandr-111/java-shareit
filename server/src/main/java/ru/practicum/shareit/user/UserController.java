@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,13 +12,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import ru.practicum.shareit.PageResponse;
 import ru.practicum.shareit.exception.Response;
 import ru.practicum.shareit.user.dto.UserDtoChange;
 import ru.practicum.shareit.user.dto.UserDtoResponse;
 
 import java.net.URI;
-import java.util.List;
 
 @Slf4j
 @Controller
@@ -47,10 +49,20 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDtoResponse>> getAllUsers() {
+    public ResponseEntity<PageResponse<UserDtoResponse>> getAllUsers(
+            @RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) {
         log.debug("UserController. Начато получение списка всех пользователей");
-        List<UserDtoResponse> result = userService.getAll();
-        return ResponseEntity.ok(result);
+        Page<UserDtoResponse> page = userService.getAll(from, size);
+
+        PageResponse<UserDtoResponse> response = new PageResponse<>();
+        response.setContent(page.getContent());
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

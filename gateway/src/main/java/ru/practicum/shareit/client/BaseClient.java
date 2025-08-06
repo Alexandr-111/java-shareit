@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import ru.practicum.shareit.PageResponse;
 import ru.practicum.shareit.exception.CustomApiException;
 import ru.practicum.shareit.exception.NetworkException;
 import ru.practicum.shareit.exception.ServerResponseException;
@@ -202,6 +204,58 @@ public class BaseClient {
             throw new NetworkException("Ошибка подключения: " + e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException("Внутренняя ошибка шлюза", e);
+        }
+    }
+
+    private <T, R> ResponseEntity<R> makeAndSendRequest(
+            HttpMethod method,
+            String path,
+            Long userId,
+            @Nullable Map<String, Object> parameters,
+            @Nullable T body,
+            ParameterizedTypeReference<R> responseType
+    ) {
+        HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders(userId));
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(path);
+
+        if (parameters != null && !parameters.isEmpty()) {
+            parameters.forEach(builder::queryParam);
+        }
+        String fullPath = builder.toUriString();
+
+        try {
+            return rest.exchange(fullPath, method, requestEntity, responseType);
+        } catch (HttpStatusCodeException e) {
+            throw new ServerResponseException(e.getResponseBodyAsString(), e.getStatusCode());
+        } catch (ResourceAccessException e) {
+            throw new NetworkException("Ошибка подключения: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Внутренняя ошибка шлюза", e);
+        }
+    }
+
+    protected <T> ResponseEntity<List<T>> getPageList(String path, Long userId, Map<String, Object> parameters) {
+        ParameterizedTypeReference<PageResponse<T>> responseTypeRef =
+                new ParameterizedTypeReference<PageResponse<T>>() {
+                };
+
+        ResponseEntity<PageResponse<T>> response = makeAndSendRequest(
+                HttpMethod.GET,
+                path,
+                userId,
+                parameters,
+                null,
+                responseTypeRef
+        );
+        // Возвращаем список, так как тесты Постман проверяют в таком формате
+        PageResponse<T> pageResponse = response.getBody();
+        if (pageResponse == null) {
+            throw new RuntimeException("Внутренняя ошибка шлюза: Тело ответа null");
+        }
+        if (pageResponse.getContent() != null) {
+            return ResponseEntity.ok(pageResponse.getContent());
+        } else {
+            throw new RuntimeException("Внутренняя ошибка шлюза. Content в PageResponse null");
         }
     }
 }

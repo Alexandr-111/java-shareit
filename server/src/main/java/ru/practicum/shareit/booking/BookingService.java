@@ -1,10 +1,9 @@
 package ru.practicum.shareit.booking;
 
+import org.springframework.data.domain.Page;
 import ru.practicum.shareit.booking.dto.BookingDtoChange;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.dto.BookingState;
-
-import java.util.List;
 
 public interface BookingService {
     BookingDtoResponse create(Long userId, BookingDtoChange bookingDtoChange);
@@ -13,7 +12,7 @@ public interface BookingService {
 
     BookingDtoResponse getBookingById(Long userId, Long bookingId);
 
-    List<BookingDtoResponse> getBookingsByUser(Long userId, BookingState bookingState);
+    Page<BookingDtoResponse> getBookingsByUser(Long userId, BookingState state, int from, int size);
 
-    List<BookingDtoResponse> getBookingsForItems(Long userId, BookingState bookingState);
+    Page<BookingDtoResponse> getBookingsForItems(Long userId, BookingState state, int from, int size);
 }

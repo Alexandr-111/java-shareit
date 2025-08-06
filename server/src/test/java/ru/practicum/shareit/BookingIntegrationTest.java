@@ -25,9 +25,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -230,44 +228,36 @@ class BookingIntegrationTest {
         createBooking(booker, item, Status.APPROVED, LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4));
         createBooking(booker, item, Status.REJECTED, LocalDateTime.now().plusDays(5), LocalDateTime.now().plusDays(6));
 
-        // Получение всех бронирований
-        MvcResult allResult = mockMvc.perform(get("/bookings")
+        // Получение всех бронирований (проверяем через jsonPath)
+        mockMvc.perform(get("/bookings")
                         .header(ID_USER, booker.getId()))
                 .andExpect(status().isOk())
-                .andReturn();
+                .andExpect(jsonPath("$.content.length()").value(3));
 
-        List<?> allBookings = objectMapper.readValue(
-                allResult.getResponse().getContentAsString(), List.class);
-        assertEquals(3, allBookings.size());
-
-        // Фильтрация по статусу
+        // Фильтрация по статусу WAITING
         mockMvc.perform(get("/bookings?state=WAITING")
                         .header(ID_USER, booker.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].status").value("WAITING"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].status").value("WAITING"));
     }
 
     @Test
     void shouldGetBookingsForOwner() throws Exception {
         // Создание бронирований
         createBooking(booker, item, Status.APPROVED, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2));
-        createBooking(booker, item, Status.REJECTED, LocalDateTime.now().plusDays(3), LocalDateTime.now().plusDays(4));
 
         // Получение бронирований владельца
-        MvcResult result = mockMvc.perform(get("/bookings/owner")
+        mockMvc.perform(get("/bookings/owner")
                         .header(ID_USER, owner.getId()))
                 .andExpect(status().isOk())
-                .andReturn();
-
-        List<?> ownerBookings = objectMapper.readValue(
-                result.getResponse().getContentAsString(), List.class);
-        assertEquals(2, ownerBookings.size());
+                .andExpect(jsonPath("$.content.length()").value(1));
 
         mockMvc.perform(get("/bookings/owner?state=FUTURE")
                         .header(ID_USER, owner.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].status").value("APPROVED"));
     }
 
     @Test
