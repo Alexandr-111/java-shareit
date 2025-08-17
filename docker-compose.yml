@@ -1,12 +1,39 @@
 services:
-  server:
-    build: .
-    image: shareit-server
-    container_name: shareit-server
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    image: shareit-gateway
+    container_name: shareit-gateway
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      server:
+       #condition: service_healthy
+        condition: service_started
+    environment:
+      - SHAREIT_SERVER_URL=http://server:9090
+    networks:
+      - shareit-net
+#    healthcheck:
+#      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 10
+#      start_period: 30s
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: shareit-server
+    container_name: shareit-server
+    ports:
+      - "9090:9090"
+    depends_on:
+      db:
+       #condition: service_healthy
+        condition: service_started
     environment:
       - SPRING_DATASOURCE_USERNAME=shareit
       - SPRING_DATASOURCE_PASSWORD=shareit
@@ -14,8 +41,16 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=UTC
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit?timeZone=UTC
       - SPRING_JPA_PROPERTIES_JAKARTA_PERSISTENCE_JDBC_TIME_ZONE=UTC
-      - LOGGING_LEVEL_ORG_HIBERNATE=DEBUG
-      - LOGGING_LEVEL_ORG_POSTGRES=DEBUG
+      - LOGGING_LEVEL_ORG_HIBERNATE=INFO
+      - LOGGING_LEVEL_ORG_POSTGRES=INFO
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl -f http://localhost:9090/actuator/health || exit 1" ]
+#      interval: 10s
+#      timeout: 10s
+#      retries: 10
+#      start_period: 50s
+    networks:
+      - shareit-net
 
   db:
     image: postgres:16.1
@@ -27,9 +62,17 @@ services:
       - POSTGRES_USER=shareit
       - POSTGRES_DB=shareit
       - TZ=UTC
-      - PGTZ=UTC  # Устанавливаем часовой пояс для PostgreSQL
-    healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
-      interval: 5s
-      retries: 10
+      - PGTZ=UTC
+#    healthcheck:
+#      test: [ "CMD-SHELL", "psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c 'SELECT 1' || exit 1" ]
+#      timeout: 10s
+#      interval: 5s
+#      retries: 10
+#      start_period: 30s
+    networks:
+      - shareit-net
+
+networks:
+ shareit-net:
+  driver: bridge
+  name: shareit-network
